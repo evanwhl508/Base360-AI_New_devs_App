@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A walkthrough of the AI-assisted engineering workflow used for the Property Revenue Dashboard code test.">
+  <title>How I Think &amp; Work — Engineering Workflow</title>
+  <style>
+    :root {
+      --ink: #12221d;
+      --ink-soft: #52635d;
+      --paper: #f4f0e8;
+      --paper-strong: #fffdf7;
+      --line: #d8d2c6;
+      --green: #0f5c4c;
+      --green-bright: #44c4a1;
+      --green-pale: #d8f0e7;
+      --amber: #e49b35;
+      --amber-pale: #f8e6c6;
+      --red: #be4c3e;
+      --red-pale: #f5ded9;
+      --blue: #4878a8;
+      --blue-pale: #dce9f4;
+      --dark: #10231e;
+      --dark-soft: #17332b;
+      --radius: 20px;
+      --shadow: 0 18px 50px rgba(16, 35, 30, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 30px;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 4%, rgba(228, 155, 53, 0.13), transparent 24rem),
+        linear-gradient(rgba(15, 92, 76, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 92, 76, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 32px 32px, 32px 32px, auto;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    button { font: inherit; }
+
+    .page-shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 18px;
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 24px;
+      height: 2px;
+      background: currentColor;
+      content: "";
+    }
+
+    .hero {
+      min-height: 92vh;
+      display: grid;
+      align-items: center;
+      padding: 72px 0 50px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      width: 430px;
+      height: 430px;
+      border: 1px solid rgba(15, 92, 76, 0.15);
+      border-radius: 50%;
+      position: absolute;
+      right: -230px;
+      top: 5%;
+      box-shadow:
+        0 0 0 46px rgba(15, 92, 76, 0.035),
+        0 0 0 92px rgba(15, 92, 76, 0.025);
+      content: "";
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(330px, 0.82fr);
+      gap: clamp(38px, 7vw, 90px);
+      align-items: center;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 760px;
+      margin-bottom: 25px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3.4rem, 8vw, 7rem);
+      font-weight: 500;
+      letter-spacing: -0.065em;
+      line-height: 0.88;
+    }
+
+    .hero .accent {
+      display: block;
+      color: var(--green);
+      font-style: italic;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+      margin-bottom: 34px;
+      color: var(--ink-soft);
+      font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .button {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 20px;
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      color: white;
+      background: var(--green);
+      font-size: 0.9rem;
+      font-weight: 750;
+      text-decoration: none;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .button:hover, .button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(15, 92, 76, 0.18);
+    }
+
+    .button.secondary {
+      color: var(--green);
+      background: transparent;
+    }
+
+    .button.secondary:hover, .button.secondary:focus-visible {
+      color: white;
+      background: var(--green);
+    }
+
+    .hero-panel {
+      padding: 28px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 28px;
+      color: white;
+      background: var(--dark);
+      box-shadow: 0 32px 80px rgba(16, 35, 30, 0.22);
+      transform: rotate(1.2deg);
+    }
+
+    .panel-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      color: rgba(255,255,255,0.6);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .panel-flow {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel-step {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 13px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .panel-step .number {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: var(--dark);
+      background: var(--green-bright);
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+
+    .panel-step strong {
+      display: block;
+      margin-bottom: 1px;
+      font-size: 0.92rem;
+    }
+
+    .panel-step small { color: rgba(255,255,255,0.56); }
+
+    .panel-step .status {
+      color: var(--green-bright);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.7rem;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      margin-top: 28px;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .metric {
+      padding: 16px 10px;
+      text-align: center;
+      background: var(--dark-soft);
+    }
+
+    .metric b {
+      display: block;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.6rem;
+      font-weight: 500;
+    }
+
+    .metric span {
+      color: rgba(255,255,255,0.55);
+      font-size: 0.67rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .section {
+      padding: 100px 0;
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 0.7fr) minmax(280px, 0.3fr);
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 60px;
+    }
+
+    h2 {
+      max-width: 780px;
+      margin-bottom: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.5rem, 5vw, 4.6rem);
+      font-weight: 500;
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+
+    .section-heading > p {
+      margin-bottom: 3px;
+      color: var(--ink-soft);
+      font-size: 0.98rem;
+    }
+
+    .workflow {
+      position: relative;
+    }
+
+    .workflow::before {
+      width: 2px;
+      position: absolute;
+      left: 39px;
+      top: 52px;
+      bottom: 52px;
+      background: linear-gradient(var(--green), var(--amber), var(--blue), var(--red));
+      content: "";
+    }
+
+    .workflow-step {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr);
+      gap: 34px;
+      position: relative;
+      margin-bottom: 34px;
+    }
+
+    .workflow-step:last-child { margin-bottom: 0; }
+
+    .step-index {
+      width: 80px;
+      height: 80px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 2;
+      border: 8px solid var(--paper);
+      border-radius: 50%;
+      color: white;
+      background: var(--green);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.45rem;
+      box-shadow: 0 0 0 1px var(--line);
+    }
+
+    .workflow-step:nth-child(2) .step-index { background: var(--amber); }
+    .workflow-step:nth-child(3) .step-index { background: var(--blue); }
+    .workflow-step:nth-child(4) .step-index { background: var(--red); }
+
+    .step-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.5fr);
+      gap: 34px;
+      padding: clamp(28px, 4vw, 46px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,253,247,0.88);
+      box-shadow: var(--shadow);
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+
+    .step-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 24px 60px rgba(16, 35, 30, 0.13);
+    }
+
+    .step-kicker {
+      margin-bottom: 10px;
+      color: var(--green);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .workflow-step:nth-child(2) .step-kicker { color: #9c5e08; }
+    .workflow-step:nth-child(3) .step-kicker { color: var(--blue); }
+    .workflow-step:nth-child(4) .step-kicker { color: var(--red); }
+
+    h3 {
+      margin-bottom: 15px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.75rem, 3vw, 2.55rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .step-copy {
+      max-width: 720px;
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 1.02rem;
+    }
+
+    .step-artefact {
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--green-pale);
+    }
+
+    .workflow-step:nth-child(2) .step-artefact { background: var(--amber-pale); }
+    .workflow-step:nth-child(3) .step-artefact { background: var(--blue-pale); }
+    .workflow-step:nth-child(4) .step-artefact { background: var(--red-pale); }
+
+    .artefact-type {
+      color: var(--ink-soft);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .file-name {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .artefact-note {
+      margin-top: 12px;
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+      line-height: 1.45;
+    }
+
+    .model-pair {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-top: 28px;
+    }
+
+    .model-card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper-strong);
+    }
+
+    .model-card .model-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+      font-weight: 850;
+    }
+
+    .model-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 5px var(--amber-pale);
+    }
+
+    .model-card.deep .model-dot {
+      background: var(--green);
+      box-shadow: 0 0 0 5px var(--green-pale);
+    }
+
+    .model-card p {
+      margin-bottom: 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .handoff {
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+
+    .principle-strip {
+      margin-top: 50px;
+      padding: 28px;
+      border-radius: var(--radius);
+      color: white;
+      background: var(--dark);
+    }
+
+    .principle-strip > p {
+      margin-bottom: 20px;
+      color: var(--green-bright);
+      font-size: 0.73rem;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .principle {
+      min-height: 130px;
+      padding: 20px;
+      background: var(--dark-soft);
+    }
+
+    .principle b {
+      display: block;
+      margin-bottom: 7px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    .principle span {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .demo-section {
+      color: white;
+      background: var(--dark);
+    }
+
+    .demo-section .eyebrow { color: var(--green-bright); }
+    .demo-section .section-heading > p { color: rgba(255,255,255,0.62); }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 72px 1fr;
+      align-items: stretch;
+    }
+
+    .stack {
+      padding: clamp(26px, 4vw, 42px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .stack.fixed {
+      border-color: rgba(68,196,161,0.48);
+      background: linear-gradient(145deg, rgba(68,196,161,0.14), rgba(255,255,255,0.04));
+    }
+
+    .stack-badge {
+      display: inline-flex;
+      margin-bottom: 22px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: #ffd1ca;
+      background: rgba(190,76,62,0.2);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .fixed .stack-badge {
+      color: #aef1dc;
+      background: rgba(68,196,161,0.17);
+    }
+
+    .stack h3 { margin-bottom: 8px; }
+
+    .stack-url {
+      margin-bottom: 28px;
+      color: rgba(255,255,255,0.5);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+    }
+
+    .stack-result {
+      margin-bottom: 22px;
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .stack-result:last-child { margin-bottom: 0; }
+
+    .result-label {
+      display: block;
+      margin-bottom: 7px;
+      color: rgba(255,255,255,0.48);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .result-value {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      line-height: 1.1;
+    }
+
+    .result-value.bad { color: #ffb7ab; }
+    .result-value.good { color: #aef1dc; }
+
+    .versus {
+      display: grid;
+      place-items: center;
+      color: rgba(255,255,255,0.35);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25rem;
+      font-style: italic;
+    }
+
+    .demo-script {
+      display: grid;
+      grid-template-columns: 0.34fr 0.66fr;
+      gap: 40px;
+      margin-top: 48px;
+      padding-top: 42px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .demo-script h3 { max-width: 310px; }
+
+    .demo-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      counter-reset: demo;
+    }
+
+    .demo-step {
+      min-height: 175px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.045);
+      counter-increment: demo;
+    }
+
+    .demo-step::before {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 24px;
+      border-radius: 50%;
+      color: var(--dark);
+      background: var(--green-bright);
+      content: counter(demo, decimal-leading-zero);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .demo-step b {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 0.95rem;
+    }
+
+    .demo-step span {
+      color: rgba(255,255,255,0.58);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .closing {
+      padding: 100px 0;
+      text-align: center;
+    }
+
+    .closing h2 {
+      max-width: 840px;
+      margin: 0 auto 24px;
+    }
+
+    .closing p {
+      max-width: 710px;
+      margin: 0 auto;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+    }
+
+    .closing-rule {
+      width: 76px;
+      height: 4px;
+      margin: 34px auto 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--amber));
+    }
+
+    footer {
+      padding: 28px 0;
+      border-top: 1px solid var(--line);
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 600ms ease, transform 600ms ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .button, .step-card { transition: none; }
+    }
+
+    @media (max-width: 920px) {
+      .hero { min-height: auto; padding-top: 90px; }
+      .hero-grid, .section-heading, .demo-script { grid-template-columns: 1fr; }
+      .hero-panel { max-width: 660px; transform: none; }
+      .section-heading { gap: 18px; }
+      .step-card { grid-template-columns: 1fr; }
+      .principles { grid-template-columns: repeat(2, 1fr); }
+      .demo-steps { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .page-shell { width: min(100% - 26px, 1180px); }
+      .hero { padding-top: 60px; }
+      h1 { font-size: clamp(3.2rem, 17vw, 5.2rem); }
+      .hero-metrics { grid-template-columns: repeat(2, 1fr); }
+      .section { padding: 76px 0; }
+      .workflow::before { left: 24px; }
+      .workflow-step { grid-template-columns: 50px minmax(0, 1fr); gap: 14px; }
+      .step-index { width: 50px; height: 50px; border-width: 5px; font-size: 1rem; }
+      .step-card { padding: 24px; }
+      .model-pair { grid-template-columns: 1fr; }
+      .handoff { transform: rotate(90deg); }
+      .principles { grid-template-columns: 1fr; }
+      .demo-grid { grid-template-columns: 1fr; gap: 14px; }
+      .versus { min-height: 40px; }
+      .footer-row { flex-direction: column; }
+    }
+
+    @media print {
+      body { background: white; }
+      .hero { min-height: auto; }
+      .hero-actions { display: none; }
+      .section { padding: 45px 0; }
+      .reveal { opacity: 1; transform: none; }
+      .step-card, .hero-panel { box-shadow: none; }
+      .workflow-step, .step-card, .stack { break-inside: avoid; }
+      .demo-section { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero" id="top">
+    <div class="page-shell hero-grid">
+      <div>
+        <p class="eyebrow">Property Revenue Dashboard · Code Test</p>
+        <h1>How I think.<span class="accent">How I work.</span></h1>
+        <p class="hero-copy">
+          I use AI as an engineering team, not an answer machine: draft quickly, challenge the
+          diagnosis independently, divide work deliberately, and gate every result with evidence.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#workflow">Walk through the process <span aria-hidden="true">↓</span></a>
+          <a class="button secondary" href="#demo">See the live demo plan</a>
+        </div>
+      </div>
+
+      <aside class="hero-panel" aria-label="Workflow summary">
+        <div class="panel-label"><span>Execution log</span><span>04 / 04</span></div>
+        <div class="panel-flow">
+          <div class="panel-step">
+            <span class="number">01</span>
+            <div><strong>Diagnose</strong><small>Claude Opus 4.8</small></div>
+            <span class="status">done</span>
+          </div>
+          <div class="panel-step">
+            <span class="number">02</span>
+            <div><strong>Challenge</strong><small>GPT-5.6-sol</small></div>
+            <span class="status">done</span>
+          </div>
+          <div class="panel-step">
+            <span class="number">03</span>
+            <div><strong>Orchestrate</strong><small>Parallel agents</small></div>
+            <span class="status">done</span>
+          </div>
+          <div class="panel-step">
+            <span class="number">04</span>
+            <div><strong>Gate</strong><small>Human verification</small></div>
+            <span class="status">done</span>
+          </div>
+        </div>
+        <div class="hero-metrics" aria-label="Workflow metrics">
+          <div class="metric"><b>2</b><span>models</span></div>
+          <div class="metric"><b>1</b><span>shared issue</span></div>
+          <div class="metric"><b>5</b><span>workstreams</span></div>
+          <div class="metric"><b>2</b><span>live stacks</span></div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="workflow">
+      <div class="page-shell">
+        <div class="section-heading reveal">
+          <div>
+            <p class="eyebrow">The workflow</p>
+            <h2>Speed first. Depth second. Evidence always.</h2>
+          </div>
+          <p>
+            Each stage has a different job. Separating them prevents one model's first answer
+            from becoming an unquestioned implementation plan.
+          </p>
+        </div>
+
+        <div class="workflow">
+          <article class="workflow-step reveal">
+            <div class="step-index" aria-hidden="true">01</div>
+            <div class="step-card">
+              <div>
+                <p class="step-kicker">Fast diagnosis</p>
+                <h3>Start with Claude Opus 4.8</h3>
+                <p class="step-copy">
+                  I first asked Opus to inspect the reported behaviour, trace the code path, and
+                  produce a structured diagnosis. Claude models are effective at turning a broad
+                  problem into a useful first draft quickly, so the output became the initial
+                  <strong>ISSUE.md</strong>—a concrete artefact that another reviewer could challenge.
+                </p>
+              </div>
+              <div class="step-artefact">
+                <span class="artefact-type">Output artefact</span>
+                <div>
+                  <div class="file-name">ISSUE.md</div>
+                  <div class="artefact-note">Symptoms → root causes → proposed fixes → validation</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step reveal">
+            <div class="step-index" aria-hidden="true">02</div>
+            <div class="step-card">
+              <div>
+                <p class="step-kicker">Independent challenge</p>
+                <h3>Use GPT-5.6-sol as the second set of eyes</h3>
+                <p class="step-copy">
+                  Next, I asked GPT to audit the draft rather than repeat the investigation. GPT
+                  models tend to spend more time on edge cases and coverage. The second pass found
+                  blind spots in the executable path, corrected overstated evidence, and separated
+                  must-fix defects from follow-up concerns. Different model families are useful
+                  precisely because their failure modes are different.
+                </p>
+
+                <div class="model-pair" aria-label="Two-model review strategy">
+                  <div class="model-card">
+                    <div class="model-name"><span class="model-dot"></span>Claude Opus 4.8</div>
+                    <p>Fast synthesis, clear structure, strong first-pass momentum.</p>
+                  </div>
+                  <div class="handoff" aria-hidden="true">→</div>
+                  <div class="model-card deep">
+                    <div class="model-name"><span class="model-dot"></span>GPT-5.6-sol</div>
+                    <p>Adversarial review, deeper coverage, and assumption checking.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="step-artefact">
+                <span class="artefact-type">Review result</span>
+                <div>
+                  <div class="file-name">ISSUE.md · v2</div>
+                  <div class="artefact-note">One draft, independently audited and evidence-corrected</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step reveal">
+            <div class="step-index" aria-hidden="true">03</div>
+            <div class="step-card">
+              <div>
+                <p class="step-kicker">Task orchestration</p>
+                <h3>Freeze the contract, then parallelize</h3>
+                <p class="step-copy">
+                  Once the diagnosis was stable, I translated it into <strong>AGENT-TASK.md</strong>.
+                  The plan partitions ownership by layer, gives each agent disjoint files, and
+                  freezes the interfaces before work begins. That lets multiple subagents execute
+                  at the same time without editing collisions—higher throughput without losing
+                  integration discipline. On a larger project I would use Pencil or a dedicated
+                  task system; for a focused code test, Markdown keeps the process transparent.
+                </p>
+              </div>
+              <div class="step-artefact">
+                <span class="artefact-type">Coordination layer</span>
+                <div>
+                  <div class="file-name">AGENT-TASK.md</div>
+                  <div class="artefact-note">Frozen contracts · file ownership · acceptance criteria</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step reveal">
+            <div class="step-index" aria-hidden="true">04</div>
+            <div class="step-card">
+              <div>
+                <p class="step-kicker">Human quality gate</p>
+                <h3>Trust the result only after it survives review</h3>
+                <p class="step-copy">
+                  The last gate stays human. I manually test the reported behaviours, compare the
+                  output against database ground truth, and review the final diff. I look especially
+                  for duplicated logic, broken contracts, unnecessary abstractions, and scope creep.
+                  AI has no hesitation about rebuilding a working system, so I explicitly enforce
+                  DRY, minimal changes, and the assignment's “debug—do not rebuild” constraint.
+                </p>
+              </div>
+              <div class="step-artefact">
+                <span class="artefact-type">Release gate</span>
+                <div>
+                  <div class="file-name">TESTING.md</div>
+                  <div class="artefact-note">Manual matrix · code review · regression checks · demo script</div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="principle-strip reveal">
+          <p>Operating principles</p>
+          <div class="principles">
+            <div class="principle"><b>Draft fast</b><span>Turn ambiguity into a reviewable artefact early.</span></div>
+            <div class="principle"><b>Review independently</b><span>Ask a second model to challenge, not echo.</span></div>
+            <div class="principle"><b>Parallelize safely</b><span>Freeze interfaces and split ownership by file.</span></div>
+            <div class="principle"><b>Verify manually</b><span>Evidence and human judgment remain the final gate.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section demo-section" id="demo">
+      <div class="page-shell">
+        <div class="section-heading reveal">
+          <div>
+            <p class="eyebrow">The demonstration</p>
+            <h2>Make the difference visible.</h2>
+          </div>
+          <p>
+            I run the original and fixed versions in separate container stacks, side by side.
+            The audience sees the same actions produce two different outcomes in real time.
+          </p>
+        </div>
+
+        <div class="demo-grid reveal">
+          <article class="stack baseline">
+            <span class="stack-badge">Original · buggy</span>
+            <h3>Baseline stack</h3>
+            <p class="stack-url">localhost:3001 · API :8001</p>
+            <div class="stack-result">
+              <span class="result-label">Sunset · prop-001 · March</span>
+              <div class="result-value bad">USD 1,000 · 3 bookings</div>
+            </div>
+            <div class="stack-result">
+              <span class="result-label">Ocean · prop-001</span>
+              <div class="result-value bad">The same USD 1,000</div>
+            </div>
+          </article>
+
+          <div class="versus" aria-hidden="true">vs.</div>
+
+          <article class="stack fixed">
+            <span class="stack-badge">Reviewed · fixed</span>
+            <h3>Fixed stack</h3>
+            <p class="stack-url">localhost:3000 · API :8000</p>
+            <div class="stack-result">
+              <span class="result-label">Sunset · prop-001 · March</span>
+              <div class="result-value good">USD 2,250.00 · 4 bookings</div>
+            </div>
+            <div class="stack-result">
+              <span class="result-label">Ocean · prop-001</span>
+              <div class="result-value good">USD 0.00 · tenant-b</div>
+            </div>
+          </article>
+        </div>
+
+        <div class="demo-script reveal">
+          <div>
+            <p class="eyebrow">Live walkthrough</p>
+            <h3>Three moves. Three proofs.</h3>
+          </div>
+          <div class="demo-steps">
+            <div class="demo-step">
+              <b>Show the timezone boundary</b>
+              <span>Compare Sunset's March total, then switch the fixed version to February.</span>
+            </div>
+            <div class="demo-step">
+              <b>Switch tenants</b>
+              <span>Log in as Ocean immediately after Sunset and expose the baseline leak.</span>
+            </div>
+            <div class="demo-step">
+              <b>Inspect the contract</b>
+              <span>Show the exact decimal string, tenant context, period, and isolated cache key.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="page-shell reveal">
+        <p class="eyebrow">The takeaway</p>
+        <h2>AI accelerates the work. Engineering judgment controls the outcome.</h2>
+        <p>
+          The process is deliberately layered: one model creates momentum, another challenges
+          assumptions, agents increase throughput, and a human-owned quality gate decides when
+          the result is actually ready.
+        </p>
+        <div class="closing-rule" aria-hidden="true"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="page-shell footer-row">
+      <span>Property Revenue Dashboard · Engineering workflow</span>
+      <span>Diagnose → Challenge → Orchestrate → Gate</span>
+    </div>
+  </footer>
+
+  <script>
+    const reveals = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      reveals.forEach((element) => observer.observe(element));
+    } else {
+      reveals.forEach((element) => element.classList.add('visible'));
+    }
+  </script>
+</body>
+</html>
